@@ -36,49 +36,118 @@ import speech_recognition as sr
 r = sr.Recognizer()
 
 
-## Talking to the computer
+class Eliza:
 
-def interact(prompt, rules, default_responses):
-    """Have a conversation with a user."""
-    # Read a line, process it, and print the results until no input remains.
-    while True:
-        # Remove the punctuation from the input and convert to upper-case
-        # to simplify matching.
-        audio = get_audio()
+    def __init__(self, interface, rules, language):
+        self.interface = interface
+        self.rules = rules
+        self.language = language
 
-        try:
-            user_input_original = get_user_input(audio, lang='pl-PL')
-            print(user_input_original)
-            user_input = translate(user_input_original, to_lang='en')
-            print(user_input)
-        except:
-            break
-        response_en = respond(rules, user_input, default_responses)
-        response = translate(response_en, to_lang='pl')
+    def interact(self, prompt, default_responses):
+        """Have a conversation with a user."""
+        # Read a line, process it, and print the results until no input remains.
+        while True:
+            # Remove the punctuation from the input and convert to upper-case
+            # to simplify matching.
+            try:
+                user_input = self.interface.get_user_input()
+                print(user_input)
+                #user_input = translate(user_input, to_lang=self.language)
+                #print(user_input)
+            except:
+                break
+            response_en = self.respond(user_input, default_responses)
+            self.interface.get_user_output(response_en)
+            #response = translate(response_en, to_lang='pl')
+            #self.interface.get_user_output(response)
+
+    def respond(self, user_input, default_responses):
+        """Respond to an input sentence according to the given rules."""
+
+        inp = user_input.split()  # match_pattern expects a list of tokens
+
+        # Look through rules and find input patterns that matches the input.
+        matching_rules = []
+        for pattern, transforms in self.rules:
+            pattern = pattern.split()
+            replacements = match_pattern(pattern, inp)
+            if replacements:
+                matching_rules.append((transforms, replacements))
+
+        # When rules are found, choose one and one of its responses at random.
+        # If no rule applies, we use the default rule.
+        if matching_rules:
+            responses, replacements = random.choice(matching_rules)
+            response = random.choice(responses)
+        else:
+            replacements = {}
+            response = random.choice(default_responses)
+
+        # Replace the variables in the output pattern with the values matched from
+        # the input string.
+        for variable, replacement in replacements.items():
+            replacement = ' '.join(switch_viewpoint(replacement))
+            if replacement:
+                response = response.replace('?' + variable, replacement)
+
+        return response
+
+
+class TerminalInterface:
+
+    def get_user_input(self):
+        text = input()
+        return text
+
+    def user_output(self, response):
         print(response)
-        read_text(response, lang='pl')
 
 
-def get_audio():
-    with sr.Microphone() as source:
-        print("Say something!")
-        audio = r.listen(source)
-    return audio
+class AudioInterface:
 
+    def __init__(self, input_lang, output_lang):
+        self.input_lang = input_lang
+        self.output_lang = output_lang
 
-def get_user_input(audio, lang):
-    try:
-        # for testing purposes, we're just using the default API key
-        # to use another API key, use `r.recognize_google(audio, key="GOOGLE_SPEECH_RECOGNITION_API_KEY")`
-        # instead of `r.recognize_google(audio)`
-        user_input = remove_punct(
-            r.recognize_google(audio, language=lang).upper()
-        )
-    except sr.UnknownValueError:
-        print("Google Speech Recognition could not understand audio")
-    except sr.RequestError as e:
-        print("Could not request results from Google Speech Recognition service; {0}".format(e))
-    return user_input
+    def get_user_input(self):
+        audio = self._get_audio()
+        print('got audio')
+        text = self._transcribe(audio)
+        print(text if text else 'No text')
+        return text
+
+    def get_user_output(self, response):
+        print(response)
+        self._read_text(response)
+
+    def _get_audio(self):
+        with sr.Microphone() as source:
+            print("Say something!")
+            audio = r.listen(source)
+        return audio
+
+    def _transcribe(self, audio):
+        """Turn audio into text"""
+        try:
+            # for testing purposes, we're just using the default API key
+            # to use another API key, use `r.recognize_google(audio, key="GOOGLE_SPEECH_RECOGNITION_API_KEY")`
+            # instead of `r.recognize_google(audio)`
+            user_input = remove_punct(
+                r.recognize_google(audio, language=self.input_lang).upper()
+            )
+        except sr.UnknownValueError:
+            print("Google Speech Recognition could not understand audio")
+        except sr.RequestError as e:
+            print("Could not request results from Google Speech Recognition service; {0}".format(e))
+        except:
+            print('Exception occurred')
+        return user_input
+
+    def _read_text(self, text):
+        tts = gTTS(text=text, lang=self.output_lang)
+        tts.save("response.mp3")
+        os.system("mpg321 response.mp3 --quiet")
+        os.system('rm response.mp3')
 
 
 def translate(text, to_lang='pl'):
@@ -89,44 +158,7 @@ def translate(text, to_lang='pl'):
     return response.get('text')[0]
 
 
-def read_text(text, lang='en'):
-    tts = gTTS(text=text, lang=lang)
-    tts.save("response.mp3")
-    os.system("mpg321 response.mp3 --quiet")
-    os.system('rm response.mp3')
 
-
-def respond(rules, user_input, default_responses):
-    """Respond to an input sentence according to the given rules."""
-
-    inp = user_input.split() # match_pattern expects a list of tokens
-
-    # Look through rules and find input patterns that matches the input.
-    matching_rules = []
-    for pattern, transforms in rules:
-        pattern = pattern.split()
-        replacements = match_pattern(pattern, inp)
-        if replacements:
-            matching_rules.append((transforms, replacements))
-
-    # When rules are found, choose one and one of its responses at random.
-    # If no rule applies, we use the default rule.
-    if matching_rules:
-        responses, replacements = random.choice(matching_rules)
-        response = random.choice(responses)
-    else:
-        replacements = {}
-        response = random.choice(default_responses)
-
-    # Replace the variables in the output pattern with the values matched from
-    # the input string.
-    for variable, replacement in replacements.items():
-        replacement = ' '.join(switch_viewpoint(replacement))
-        if replacement:
-            response = response.replace('?' + variable, replacement)
-    
-    return response
-    
 
 ## Pattern matching
 

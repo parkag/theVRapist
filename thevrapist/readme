@@ -1,0 +1,5 @@
+# thevrapist
+
+to run:
+    sudo apt-get install mpg321
+    pip install -r requirements.txt
