@@ -1,0 +1,3 @@
+SpeechRecognition
+yandex.translate
+gTTs
