@@ -19,49 +19,39 @@ The conversation proceeds by reading a sentence from the user, searching through
 the rules to find an input pattern that matches, replacing variables in the
 output pattern, and printing the results to the user.
 
-For examples of using this scheme, see the following programs:
-
-- [Eliza](examples/eliza/eliza.html)
-- [Automated technical support system](examples/eliza/support.html)
-
 This implementation is inspired by Chapter 5 of "Paradigms of Artificial
 Intelligence Programming" by Peter Norvig.
 """
-from gtts import gTTS
-import os
 import random
 import string
-import speech_recognition as sr
-
-r = sr.Recognizer()
+from translator import translate
 
 
 class Eliza:
 
-    def __init__(self, interface, rules, language):
+    def __init__(self, interface, rules, default_responses, language):
         self.interface = interface
         self.rules = rules
-        self.language = language
+        self.default_responses = default_responses
+        self.rules_language = language
 
-    def interact(self, prompt, default_responses):
+    def interact(self):
         """Have a conversation with a user."""
         # Read a line, process it, and print the results until no input remains.
         while True:
-            # Remove the punctuation from the input and convert to upper-case
-            # to simplify matching.
             try:
                 user_input = self.interface.get_user_input()
                 print(user_input)
-                #user_input = translate(user_input, to_lang=self.language)
-                #print(user_input)
+                user_input = translate(user_input, to_lang=self.rules_language)
+                print(user_input)
             except:
                 break
-            response_en = self.respond(user_input, default_responses)
-            self.interface.get_user_output(response_en)
-            #response = translate(response_en, to_lang='pl')
-            #self.interface.get_user_output(response)
+            response_en = self.respond(user_input)
+            #self.interface.get_user_output(response_en)
+            response = translate(response_en, to_lang=self.interface.output_lang)
+            self.interface.get_user_output(response)
 
-    def respond(self, user_input, default_responses):
+    def respond(self, user_input):
         """Respond to an input sentence according to the given rules."""
 
         inp = user_input.split()  # match_pattern expects a list of tokens
@@ -81,7 +71,7 @@ class Eliza:
             response = random.choice(responses)
         else:
             replacements = {}
-            response = random.choice(default_responses)
+            response = random.choice(self.default_responses)
 
         # Replace the variables in the output pattern with the values matched from
         # the input string.
@@ -92,75 +82,8 @@ class Eliza:
 
         return response
 
+# Pattern matching
 
-class TerminalInterface:
-
-    def get_user_input(self):
-        text = input()
-        return text
-
-    def user_output(self, response):
-        print(response)
-
-
-class AudioInterface:
-
-    def __init__(self, input_lang, output_lang):
-        self.input_lang = input_lang
-        self.output_lang = output_lang
-
-    def get_user_input(self):
-        audio = self._get_audio()
-        print('got audio')
-        text = self._transcribe(audio)
-        print(text if text else 'No text')
-        return text
-
-    def get_user_output(self, response):
-        print(response)
-        self._read_text(response)
-
-    def _get_audio(self):
-        with sr.Microphone() as source:
-            print("Say something!")
-            audio = r.listen(source)
-        return audio
-
-    def _transcribe(self, audio):
-        """Turn audio into text"""
-        try:
-            # for testing purposes, we're just using the default API key
-            # to use another API key, use `r.recognize_google(audio, key="GOOGLE_SPEECH_RECOGNITION_API_KEY")`
-            # instead of `r.recognize_google(audio)`
-            user_input = remove_punct(
-                r.recognize_google(audio, language=self.input_lang).upper()
-            )
-        except sr.UnknownValueError:
-            print("Google Speech Recognition could not understand audio")
-        except sr.RequestError as e:
-            print("Could not request results from Google Speech Recognition service; {0}".format(e))
-        except:
-            print('Exception occurred')
-        return user_input
-
-    def _read_text(self, text):
-        tts = gTTS(text=text, lang=self.output_lang)
-        tts.save("response.mp3")
-        os.system("mpg321 response.mp3 --quiet")
-        os.system('rm response.mp3')
-
-
-def translate(text, to_lang='pl'):
-    from yandex_translate import YandexTranslate
-    api_key = ''
-    translator = YandexTranslate(api_key)
-    response = translator.translate(text, to_lang)
-    return response.get('text')[0]
-
-
-
-
-## Pattern matching
 
 def match_pattern(pattern, user_input, bindings=None):
     """
@@ -197,9 +120,11 @@ def match_pattern(pattern, user_input, bindings=None):
         # Recurse:
         # try to match the first tokens of both pattern and input.  The bindings
         # that result are used to match the remainder of both lists.
-        return match_pattern(pattern[1:],
-                             user_input[1:],
-                             match_pattern(pattern[0], user_input[0], bindings))
+        return match_pattern(
+            pattern[1:],
+            user_input[1:],
+            match_pattern(pattern[0], user_input[0], bindings)
+        )
     else:
         return False
 
@@ -304,13 +229,3 @@ def switch_viewpoint(words):
                     ('AM', 'ARE'),
                     ('ARE', 'AM')]
     return [replace(word, replacements) for word in words]
-
-
-def remove_punct(string):
-    """Remove common punctuation marks."""
-    if string.endswith('?'):
-        string = string[:-1]
-    return (string.replace(',', '')
-            .replace('.', '')
-            .replace(';', '')
-            .replace('!', ''))

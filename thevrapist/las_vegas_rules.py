@@ -1,55 +1,27 @@
 rules = {
-    "?*x model ?*y": [
-        "I am not interested in models"
-    ],
-    "?*x Eliza ?*y": [
-        'Hi, I am Eliza. How can I help you?',
-        'Hi',
-        'How did you know my name? lol'
+    "?*x Hello ?*y": [
+        'Hello how can I help you?',
+        'Hi, where do you want to go?',
     ],
     "Hi ?*x": [
         "I'm not ?x?",
         "How did you know my name?!"
     ],
     "?*x let's talk": [
-        'What do you want to discuss?',
+        'Ok but please keep it short, I am just selling tickets.',
         "Sure, lets talk"
     ],
     "?*x bad ?*y": [
         "Don't worry, I am here with you",
         "For me you are the best"
     ],
-    "?*x hello ?*y": [
-        "How do you do. Please state your problem."
-    ],
-    "?*x computer ?*y": [
-        "Do computers worry you?",
-        "What do you think about machines?",
-        "Why do you mention computers?",
-        "What do you think machines have to do with your problem?",
-    ],
-    "?*x name ?*y": [
-        "I am not interested in names",
-        "I am Eliza"
-    ],
     "?*x sorry ?*y": [
         "Please don't apologize",
         "Apologies are not necessary",
         "What feelings do you have when you apologize",
     ],
-    "?*x I remember ?*y": [
-        "Do you often think of ?y?",
-        "Does thinking of ?y bring anything else to mind?",
-        "What else do you remember?",
-        "Why do you recall ?y right now?",
-        "What in the present situation reminds you of ?y?",
-        "What is the connection between me and ?y?",
-    ],
-    "?*x do you remember ?*y": [
-        "Did you think I would forget ?y?",
-        "Why do you think I should recall ?y now?",
-        "What about ?y?",
-        "You mentioned ?y",
+    "?*x Las Vegas ?*y": [
+        "Do you want to fly to Las Vegas?",
     ],
     "?*x I want ?*y": [
         "What would it mean if you got ?y?",
@@ -62,24 +34,6 @@ rules = {
         "What do you think about ?y?",
         "Really--if ?y?"
     ],
-    "?*x I dreamt ?*y": [
-        "How do you feel about ?y in reality?",
-    ],
-    "?*x dream ?*y": [
-        "What does this dream suggest to you?",
-        "Do you dream often?",
-        "What persons appear in your dreams?",
-        "Don't you believe that dream has to do with your problem?",
-    ],
-    "?*x my mother ?*y": [
-        "Who else in your family ?y?",
-        "Tell me more about your family",
-    ],
-    "?*x my father ?*y": [
-        "Your father?",
-        "Does he influence you strongly?",
-        "What else comes to mind when you think of your father?",
-    ],
     "?*x I am glad ?*y": [
         "How have I helped you to be ?y?",
         "What makes you happy just now?",
@@ -88,27 +42,6 @@ rules = {
     "?*x I am sad ?*y": [
         "I am sorry to hear you are depressed",
         "I'm sure it's not pleasant to be sad",
-    ],
-    "?*x are like ?*y": [
-        "What resemblence do you see between ?x and ?y?",
-    ],
-    "?*x is like ?*y": [
-        "In what way is it that ?x is like ?y?",
-        "What resemblence do you see?",
-        "Could there really be some connection?",
-        "How?",
-    ],
-    "?*x alike ?*y": [
-        "In what way?",
-        "What similarities are there?",
-    ],
-    "?* same ?*y": [
-        "What other connections do you see?",
-    ],
-    "?*x no ?*y": [
-        "Why not?",
-        "You are being a bit negative.",
-        "Are you saying 'No' just to be negative?"
     ],
     "?*x I was ?*y": [
         "Were you really?",
@@ -200,17 +133,13 @@ rules = {
     "?*x perhaps ?*y": [
         "You do not seem quite certain",
     ],
-    "?*x are ?*y": [
-        "Did you think they might not be ?y?",
-        "Possibly they are ?y",
-    ],
 }
 
 default_responses = [
     "Very interesting",
     "I am not sure I understand you fully",
-    "What does that suggest to you?",
-    "Please continue",
+    "What do you mean?",
+    "Can you repeat?",
     "Go on",
-    "Do you feel strongly about discussing such things?",
+    "How can I help you?",
 ]

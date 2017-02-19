@@ -1,29 +1,35 @@
-import stupid_eliza as eliza
-from rules import (
+from thevrapist.stupid_eliza import Eliza
+from thevrapist.io import AudioInterface, remove_punct
+from thevrapist.rules import (
     rules,
     default_responses
 )
 
 
-def main():
-    # We need the rules in a list containing elements of the following form:
-    # `(input pattern, [output pattern 1, output pattern 2, ...]`
+def load_rules():
     rules_list = []
     for pattern, transforms in rules.items():
         # Remove the punctuation from the pattern to simplify matching.
-        pattern = eliza.remove_punct(str(pattern.upper()))  # kill unicode
+        pattern = remove_punct(str(pattern.upper()))  # kill unicode
         transforms = [str(t).upper() for t in transforms]
         rules_list.append((pattern, transforms))
+    return rules_list
 
-    audio_interface = eliza.AudioInterface('en', 'en')
-    eliza_bot = eliza.Eliza(audio_interface, rules_list, 'en')
 
-    eliza_bot.interact(
-        'ELIZA> ',
-        list(map(str.upper, default_responses))
+
+def main():
+    rules_list = load_rules()
+
+    audio_interface = AudioInterface('pl', 'pl')
+    eliza_bot = Eliza(
+        interface=audio_interface,
+        rules=rules_list,
+        default_responses=list(map(str.upper, default_responses)),
+        language='en'
     )
+
+    eliza_bot.interact()
 
 
 if __name__ == '__main__':
     main()
-

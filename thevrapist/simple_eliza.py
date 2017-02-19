@@ -1,6 +1,10 @@
 import re
 import random
+from thevrapist.translator import translate
+from thevrapist.io import AudioInterface
 
+
+"""A simple implementation of Eliza"""
 
 reflections = {
     "am": "are",
@@ -14,6 +18,7 @@ reflections = {
     "you've": "I have",
     "you'll": "I will",
     "your": "my",
+    "you're": 'I am',
     "yours": "mine",
     "you": "me",
     "me": "you"
@@ -226,31 +231,63 @@ psychobabble = [
 ]
 
 
-def reflect(fragment):
-    tokens = fragment.lower().split()
-    for i, token in enumerate(tokens):
-        if token in reflections:
-            tokens[i] = reflections[token]
-    return ' '.join(tokens)
+class Eliza:
 
+    def __init__(self, interface, rules, language):
+        self.interface = interface
+        self.rules = rules
+        self.language = language
 
-def analyze(statement):
-    for pattern, responses in psychobabble:
-        match = re.match(pattern, statement.rstrip(".!"))
-        if match:
-            response = random.choice(responses)
-            return response.format(*[reflect(g) for g in match.groups()])
+    def interact(self):
+        self.greet()
+        while True:
+            try:
+                user_input = self.interface.get_user_input()
+                if user_input == "quit":
+                    break
+                print(user_input)
+                if self.interface.input_lang != self.language:
+                    user_input = translate(user_input, to_lang=self.language)
+                    print(user_input)
+            except:
+                break
+            response = self.respond(user_input)
+            if self.language != self.interface.output_lang:
+                response = translate(
+                    response,
+                    to_lang=self.interface.output_lang
+                )
+
+            self.interface.get_user_output(response)
+
+    def greet(self):
+        self.interface.get_user_output("Hello. How are you feeling today?")
+
+    def reflect(self, fragment):
+        tokens = fragment.lower().split()
+        for i, token in enumerate(tokens):
+            if token in reflections:
+                tokens[i] = reflections[token]
+        return ' '.join(tokens)
+
+    def respond(self, statement):
+        for pattern, responses in self.rules:
+            match = re.match(pattern, statement.rstrip(".!"), re.IGNORECASE)
+            print(pattern, match)
+            if match:
+                response = random.choice(responses)
+                return response.format(
+                    *[self.reflect(g) for g in match.groups()]
+                )
 
 
 def main():
-    print("Hello. How are you feeling today?")
-
-    while True:
-        statement = input("> ")
-        print(analyze(statement))
-
-        if statement == "quit":
-            break
+    audio_interface = AudioInterface(
+        input_lang='en',
+        output_lang='en'
+    )
+    eliza = Eliza(audio_interface, psychobabble, 'en')
+    eliza.interact()
 
 
 if __name__ == "__main__":
